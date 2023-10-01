@@ -1,0 +1,12 @@
+{
+  "name": "xwebsockets",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.mjs",
+  "scripts": {},
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ws": "^8.14.2"
+  }
+}
