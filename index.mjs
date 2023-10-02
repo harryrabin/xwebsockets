@@ -1,10 +1,16 @@
 import dgram from 'node:dgram';
 import WebSocket, { WebSocketServer } from 'ws';
+import express from 'express';
 
-const dgramSocket = dgram.createSocket('udp4')
+const serverApp = express();
+serverApp.use('/', express.static('./dist'));
+const expressServer = serverApp.listen(5173);
+
+const dgramSocket = dgram.createSocket('udp4');
 dgramSocket.bind();
 
-const wsServer = new WebSocketServer({ port: 5174 });
+const wsServer = new WebSocketServer({ server: expressServer });
+
 wsServer.on('connection', ws => {
     ws.on('error', console.error);
     ws.on('message', handleWebSocketMessage.bind(ws))
