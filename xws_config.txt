@@ -1,0 +1,2 @@
+XWS_STATIC=./dist
+XWS_PORT=8080

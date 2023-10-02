@@ -1,20 +1,33 @@
 import dgram from 'node:dgram';
+import path from 'node:path';
+import dotenv from 'dotenv';
 import WebSocket, { WebSocketServer } from 'ws';
 import express from 'express';
 
+dotenv.config({
+    path: path.resolve(process.cwd(), 'xws_config.txt')
+});
+
+// Express server
 const serverApp = express();
-serverApp.use('/', express.static('./dist'));
-const expressServer = serverApp.listen(5173);
 
-const dgramSocket = dgram.createSocket('udp4');
-dgramSocket.bind();
+if (process.env.XWS_STATIC && process.env.XWS_STATIC !== "null") {
+    serverApp.use('/', express.static(process.env.XWS_STATIC));
+}
 
+const expressServer = serverApp.listen(parseInt(process.env.XWS_PORT) || 5173);
+
+// WebSocket server that automatically handles upgrade events from express server
 const wsServer = new WebSocketServer({ server: expressServer });
 
 wsServer.on('connection', ws => {
     ws.on('error', console.error);
     ws.on('message', handleWebSocketMessage.bind(ws))
 });
+
+// UDP socket to send/receive X-Plane data
+const dgramSocket = dgram.createSocket('udp4');
+dgramSocket.bind();
 
 dgramSocket.on('message', (msg) => {
     const header = msg.toString('latin1', 0, 4);
@@ -54,7 +67,7 @@ function handleWebSocketMessage(rawData) {
         case "DREF":
             dgramSocket.send(constructDrefBuffer(data['data'], data['path']), 49000);
             break;
-        
+
         case "RREF":
             dgramSocket.send(constructRrefBuffer(data['freq'], data['index'], data['path']), 49000);
             break;
