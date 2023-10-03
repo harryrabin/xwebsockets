@@ -123,7 +123,9 @@ function constructRrefBuffer(freq, index, drefPath) {
  * @returns {Map<number, number>}
  */
 function decodeRrefResponse(buf) {
+    /** @type {Map<number, number>} */
     const out = new Map();
+    
     const limit = buf.length - 7;
 
     for (let offset = 5; offset < limit; offset += 8) {
