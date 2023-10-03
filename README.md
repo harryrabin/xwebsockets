@@ -10,6 +10,11 @@
 - RREF
 - DREF
 
+### Installation
+Prerequisites: Node.js, NPM
+
+Clone the repository, open up your shell and navigate to the repo folder. Run `npm install` to install dependencies and `node index.mjs` to start the server.
+
 <hr>
 
 ## Commands
