@@ -15,6 +15,15 @@ Prerequisites: Node.js, NPM
 
 Clone the repository, open up your shell and navigate to the repo folder. Run `npm install` to install dependencies and `node index.mjs` to start the server.
 
+### Static Server
+
+In `xws_config.txt` change `XWS_STATIC` to your static assets directory. Can be absolute or relative.
+
+Example:
+```
+XWS_STATIC=./dist
+```
+
 <hr>
 
 ## Commands
