@@ -1,2 +1,2 @@
-XWS_STATIC=null
+XWS_STATIC=./dist
 XWS_PORT=5174

@@ -4,12 +4,14 @@ import os from 'node:os';
 import dotenv from 'dotenv';
 import WebSocket, { WebSocketServer } from 'ws';
 import express from 'express';
-
-const IS_LE = os.endianness() === 'LE';
+import ip from 'ip';
 
 dotenv.config({
     path: path.resolve(process.cwd(), 'xws_config.txt')
 });
+
+const IS_LE = os.endianness() === 'LE';
+const PORT = parseInt(process.env.XWS_PORT) || 0;
 
 // Express server
 const serverApp = express();
@@ -18,7 +20,7 @@ if (process.env.XWS_STATIC && process.env.XWS_STATIC !== "null") {
     serverApp.use('/', express.static(process.env.XWS_STATIC));
 }
 
-const expressServer = serverApp.listen(parseInt(process.env.XWS_PORT) || 5173);
+const expressServer = serverApp.listen(PORT);
 
 // WebSocket server that automatically handles upgrade events from express server
 const wsServer = new WebSocketServer({ server: expressServer });
@@ -54,6 +56,8 @@ dgramSocket.on('message', (msg) => {
         });
     }
 });
+
+console.log(`Server running @ ${ip.address()}:${PORT}`);
 
 /**
  * Handle received WebSocket message
@@ -94,10 +98,10 @@ function constructCmndBuffer(commandPath) {
  */
 function constructDrefBuffer(data, drefPath) {
     const buf = Buffer.alloc(509, 0);
-    const dv = new DataView(buf);
+    const xd = new XDataGetter(buf);
 
     buf.write('DREF', 0);
-    dv.setFloat32(data, 5, IS_LE);
+    xd.writeXInt(data, 5);
     buf.write(drefPath, 9);
 
     return buf;
@@ -112,11 +116,11 @@ function constructDrefBuffer(data, drefPath) {
  */
 function constructRrefBuffer(freq, index, drefPath) {
     const buf = Buffer.alloc(413, 0);
-    const dv = new DataView(buf);
+    const xd = new XDataGetter(buf);
 
     buf.write('RREF', 0);
-    dv.setInt32(freq, 5, IS_LE);
-    dv.setInt32(index, 9, IS_LE);
+    xd.writeXInt(freq, 5);
+    xd.writeXInt(index, 9);
     buf.write(drefPath, 13, 'latin1');
 
     return buf;
@@ -130,16 +134,47 @@ function constructRrefBuffer(freq, index, drefPath) {
 function decodeRrefResponse(buf) {
     /** @type {Map<number, number>} */
     const out = new Map();
-    const dv = new DataView(buf);
+    const xd = new XDataGetter(buf);
+
     const limit = buf.length - 7;
 
     for (let offset = 5; offset < limit; offset += 8) {
-        const index = dv.getInt32(offset, IS_LE);
-        const value = dv.getFloat32(offset + 4, IS_LE);
+        const index = xd.readXInt(offset);
+        const value = xd.readXFlt(offset + 4);
         out.set(index, value);
     }
 
     return out;
+}
+
+/**
+ * @constructor
+ * @param {Buffer} buf - Buffer object to bind to
+ */
+function XDataGetter(buf) {
+    /**
+     * Read XINT at offset
+     * @type {(offset: number) => number}
+     */
+    this.readXInt = IS_LE ? buf.readInt32LE.bind(buf) : buf.readInt32BE.bind(buf);
+
+    /**
+     * Write XINT at offset 
+     * @type {(value: number, offset: number) => void}
+     */
+    this.writeXInt = IS_LE ? buf.writeInt32LE.bind(buf) : buf.writeInt32BE.bind(buf);
+
+    /**
+     * Read XFLT at offset
+     * @type {(offset: number) => number}
+     */
+    this.readXFlt = IS_LE ? buf.readFloatLE.bind(buf) : buf.readFloatBE.bind(buf);
+
+    /**
+     * Write XFLT at offset
+     * @type {(value: number, offset: number) => void}
+     */
+    this.writeXFlt = IS_LE ? buf.writeFloatLE.bind(buf) : buf.writeFloatBE.bind(buf);
 }
 
 function sleep(ms) {
