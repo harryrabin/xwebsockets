@@ -1,8 +1,11 @@
 import dgram from 'node:dgram';
 import path from 'node:path';
+import os from 'node:os';
 import dotenv from 'dotenv';
 import WebSocket, { WebSocketServer } from 'ws';
 import express from 'express';
+
+const IS_LE = os.endianness() === 'LE';
 
 dotenv.config({
     path: path.resolve(process.cwd(), 'xws_config.txt')
@@ -91,9 +94,10 @@ function constructCmndBuffer(commandPath) {
  */
 function constructDrefBuffer(data, drefPath) {
     const buf = Buffer.alloc(509, 0);
+    const dv = new DataView(buf);
 
     buf.write('DREF', 0);
-    buf.writeFloatLE(data, 5)
+    dv.setFloat32(data, 5, IS_LE);
     buf.write(drefPath, 9);
 
     return buf;
@@ -108,11 +112,12 @@ function constructDrefBuffer(data, drefPath) {
  */
 function constructRrefBuffer(freq, index, drefPath) {
     const buf = Buffer.alloc(413, 0);
+    const dv = new DataView(buf);
 
     buf.write('RREF', 0);
-    buf.writeInt32LE(freq, 5);
-    buf.writeInt32LE(index, 9);
-    buf.write(drefPath, 13, 'ascii');
+    dv.setInt32(freq, 5, IS_LE);
+    dv.setInt32(index, 9, IS_LE);
+    buf.write(drefPath, 13, 'latin1');
 
     return buf;
 }
@@ -125,12 +130,12 @@ function constructRrefBuffer(freq, index, drefPath) {
 function decodeRrefResponse(buf) {
     /** @type {Map<number, number>} */
     const out = new Map();
-    
+    const dv = new DataView(buf);
     const limit = buf.length - 7;
 
     for (let offset = 5; offset < limit; offset += 8) {
-        const index = buf.readInt32LE(offset);
-        const value = buf.readFloatLE(offset + 4);
+        const index = dv.getInt32(offset, IS_LE);
+        const value = dv.getFloat32(offset + 4, IS_LE);
         out.set(index, value);
     }
 
