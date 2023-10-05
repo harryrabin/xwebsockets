@@ -16,7 +16,7 @@ const SERVER_PORT = parseInt(process.env.XWS_PORT!) || 0;
 // Express server
 const serverApp = express();
 
-if (process.env.XWS_ENV === 'debug') serverApp.use('/', (req, res, next) => {
+if (process.env.XWS_ENV === 'debug') serverApp.use('/', (req, _res, next) => {
     console.log(`${req.method} ${req.originalUrl}`);
     next();
 });
@@ -27,7 +27,7 @@ if (process.env.XWS_STATIC && process.env.XWS_STATIC !== "null") {
 
 const expressServer = serverApp.listen(SERVER_PORT);
 
-if (process.env.XWS_ENV === 'debug') expressServer.on('upgrade' ,(req) => {
+if (process.env.XWS_ENV === 'debug') expressServer.on('upgrade', (req) => {
     console.log(`UPGRADE ${req.method} ${req.url}`);
 })
 
@@ -45,15 +45,15 @@ function handleWebSocketMessage(rawData: string) {
     switch (data['header']) {
         case "CMND":
             dgramSocket.send(buffers.constructCmnd(data['path']), XP_PORT);
-            break;
+            return;
 
         case "DREF":
             dgramSocket.send(buffers.constructDref(data['data'], data['path']), XP_PORT);
-            break;
+            return;
 
         case "RREF":
             dgramSocket.send(buffers.constructRref(data['freq'], data['index'], data['path']), XP_PORT);
-            break;
+            return;
     }
 }
 
@@ -96,4 +96,5 @@ function logBuffer(inputBuf: Buffer) {
     console.log(buf.toString('latin1'));
 }
 
+// Launch complete!
 console.log(`Server running @ http://${ip.address()}:${SERVER_PORT}`);
