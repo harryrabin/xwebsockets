@@ -1,14 +1,12 @@
 import os from 'node:os';
 
-const IS_LE = os.endianness() === 'LE';
-
-export function constructCmndBuffer(commandPath: string): Buffer {
+export function constructCmnd(commandPath: string): Buffer {
     return Buffer.from('CMND\0' + commandPath);
 }
 
-export function constructDrefBuffer(data: number, drefPath: string): Buffer {
+export function constructDref(data: number, drefPath: string): Buffer {
     const buf = Buffer.alloc(509, 0);
-    const xd = new XDataGetter(buf);
+    const xd = new XPDataView(buf);
 
     buf.write('DREF', 0);
     xd.writeXInt(data, 5);
@@ -17,9 +15,9 @@ export function constructDrefBuffer(data: number, drefPath: string): Buffer {
     return buf;
 }
 
-export function constructRrefBuffer(freq: number, index: number, drefPath: string): Buffer {
+export function constructRref(freq: number, index: number, drefPath: string): Buffer {
     const buf = Buffer.alloc(413, 0);
-    const xd = new XDataGetter(buf);
+    const xd = new XPDataView(buf);
 
     buf.write('RREF', 0);
     xd.writeXInt(freq, 5);
@@ -31,7 +29,7 @@ export function constructRrefBuffer(freq: number, index: number, drefPath: strin
 
 export function decodeRrefResponse(buf: Buffer): Map<number, number> {
     const out = new Map<number, number>();
-    const xd = new XDataGetter(buf);
+    const xd = new XPDataView(buf);
 
     const limit = buf.length - 7;
 
@@ -44,10 +42,12 @@ export function decodeRrefResponse(buf: Buffer): Map<number, number> {
     return out;
 }
 
+const IS_LE = os.endianness() === 'LE';
+
 type ReaderFunction = (offset: number) => number;
 type WriterFunction = (value: number, offset: number) => void;
 
-export class XDataGetter {
+export class XPDataView {
     readonly readXInt: ReaderFunction;
     readonly writeXInt: WriterFunction;
 

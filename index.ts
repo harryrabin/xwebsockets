@@ -43,15 +43,15 @@ function handleWebSocketMessage(rawData: string) {
 
     switch (data['header']) {
         case "CMND":
-            dgramSocket.send(buffers.constructCmndBuffer(data['path']), 49000);
+            dgramSocket.send(buffers.constructCmnd(data['path']), 49000);
             break;
 
         case "DREF":
-            dgramSocket.send(buffers.constructDrefBuffer(data['data'], data['path']), 49000);
+            dgramSocket.send(buffers.constructDref(data['data'], data['path']), 49000);
             break;
 
         case "RREF":
-            dgramSocket.send(buffers.constructRrefBuffer(data['freq'], data['index'], data['path']), 49000);
+            dgramSocket.send(buffers.constructRref(data['freq'], data['index'], data['path']), 49000);
             break;
     }
 }
