@@ -55,9 +55,16 @@ export class XPDataView {
     readonly writeXFlt: WriterFunction;
 
     constructor(buf: Buffer) {
-        this.readXInt = IS_LE ? buf.readInt32LE.bind(buf) : buf.readInt32BE.bind(buf);
-        this.writeXInt = IS_LE ? buf.writeInt32LE.bind(buf) : buf.writeInt32BE.bind(buf);
-        this.readXFlt = IS_LE ? buf.readFloatLE.bind(buf) : buf.readFloatBE.bind(buf);
-        this.writeXFlt = IS_LE ? buf.writeFloatLE.bind(buf) : buf.writeFloatBE.bind(buf);
+        if (IS_LE) {
+            this.readXInt = buf.readInt32LE.bind(buf)
+            this.writeXInt = buf.writeInt32LE.bind(buf)
+            this.readXFlt = buf.readFloatLE.bind(buf)
+            this.writeXFlt = buf.writeFloatLE.bind(buf)
+        } else {
+            this.readXInt = buf.readInt32BE.bind(buf);
+            this.writeXInt = buf.writeInt32BE.bind(buf);
+            this.readXFlt = buf.readFloatBE.bind(buf);
+            this.writeXFlt = buf.writeFloatBE.bind(buf);
+        }
     }
 }
