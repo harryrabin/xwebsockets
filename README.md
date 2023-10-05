@@ -13,16 +13,16 @@
 ### Installation
 Prerequisites: Node.js, NPM
 
-Clone the repository, open up your shell and navigate to the repo folder. Run `npm install` to install dependencies and `node index.mjs` to start the server.
+Clone the repository, open up your shell and navigate to the repo folder. Run `npm i` to install dependencies and `node start` to compile and start the server.
 
-### Static Server
+### Settings
+Settings are changed via `xws_config.txt`.
 
-In `xws_config.txt` change `XWS_STATIC` to your static assets directory. Can be absolute or relative.
-
-Example:
-```
-XWS_STATIC=./dist
-```
+| Name | Description | Example |
+|------|-------------|---------|
+|`XWS_PORT`|The port to serve on|`8080`|
+|`XWS_STATIC`|The directory to serve static assets from|`./dist`|
+|`XWS_ENV`|Change from `debug` to `prod` to prevent logging requests|`debug`|
 
 <hr>
 

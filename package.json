@@ -1,14 +1,14 @@
 {
   "name": "xwebsockets",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.mjs",
+  "private": true,
+  "main": "index.ts",
   "scripts": {
     "build": "tsc",
     "start": "tsc; node out/index.js"
   },
   "author": "",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "devDependencies": {
     "@types/express": "^4.17.18",
     "@types/ip": "^1.1.1",
