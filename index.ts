@@ -10,7 +10,8 @@ dotenv.config({
     path: path.resolve(process.cwd(), 'xws_config.txt')
 });
 
-const PORT = parseInt(process.env.XWS_PORT!) || 0;
+const XP_PORT = 49000;
+const SERVER_PORT = parseInt(process.env.XWS_PORT!) || 0;
 
 // Express server
 const serverApp = express();
@@ -24,7 +25,7 @@ if (process.env.XWS_STATIC && process.env.XWS_STATIC !== "null") {
     serverApp.use('/', express.static(process.env.XWS_STATIC));
 }
 
-const expressServer = serverApp.listen(PORT);
+const expressServer = serverApp.listen(SERVER_PORT);
 
 if (process.env.XWS_ENV === 'debug') expressServer.on('upgrade' ,(req) => {
     console.log(`UPGRADE ${req.method} ${req.url}`);
@@ -43,15 +44,15 @@ function handleWebSocketMessage(rawData: string) {
 
     switch (data['header']) {
         case "CMND":
-            dgramSocket.send(buffers.constructCmnd(data['path']), 49000);
+            dgramSocket.send(buffers.constructCmnd(data['path']), XP_PORT);
             break;
 
         case "DREF":
-            dgramSocket.send(buffers.constructDref(data['data'], data['path']), 49000);
+            dgramSocket.send(buffers.constructDref(data['data'], data['path']), XP_PORT);
             break;
 
         case "RREF":
-            dgramSocket.send(buffers.constructRref(data['freq'], data['index'], data['path']), 49000);
+            dgramSocket.send(buffers.constructRref(data['freq'], data['index'], data['path']), XP_PORT);
             break;
     }
 }
@@ -95,4 +96,4 @@ function logBuffer(inputBuf: Buffer) {
     console.log(buf.toString('latin1'));
 }
 
-console.log(`Server running @ http://${ip.address()}:${PORT}`);
+console.log(`Server running @ http://${ip.address()}:${SERVER_PORT}`);
