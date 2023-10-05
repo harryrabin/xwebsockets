@@ -1,2 +1,3 @@
 XWS_STATIC=./dist
 XWS_PORT=5174
+XWS_ENV=debug
