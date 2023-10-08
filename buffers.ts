@@ -1,70 +1,70 @@
 import os from 'node:os';
 
 export function constructCmnd(commandPath: string): Buffer {
-    return Buffer.from('CMND\0' + commandPath);
+    return Buffer.from('CMND\0' + commandPath, 'ascii');
 }
 
 export function constructDref(data: number, drefPath: string): Buffer {
     const buf = Buffer.alloc(509, 0);
-    const xd = new XPDataView(buf);
+    const x = new XPDataView(buf);
 
     buf.write('DREF', 0);
-    xd.writeXInt(data, 5);
-    buf.write(drefPath, 9);
+    x.writeXFlt(data, 5);
+    buf.write(drefPath, 9, 'ascii');
 
     return buf;
 }
 
 export function constructRref(freq: number, index: number, drefPath: string): Buffer {
     const buf = Buffer.alloc(413, 0);
-    const xd = new XPDataView(buf);
+    const x = new XPDataView(buf);
 
     buf.write('RREF', 0);
-    xd.writeXInt(freq, 5);
-    xd.writeXInt(index, 9);
-    buf.write(drefPath, 13, 'latin1');
+    x.writeXInt(freq, 5);
+    x.writeXInt(index, 9);
+    buf.write(drefPath, 13, 'ascii');
 
     return buf;
 }
 
 export function decodeRrefResponse(buf: Buffer): Map<number, number> {
     const out = new Map<number, number>();
-    const xd = new XPDataView(buf);
+    const x = new XPDataView(buf);
 
     const limit = buf.length - 7;
 
     for (let offset = 5; offset < limit; offset += 8) {
-        const index = xd.readXInt(offset);
-        const value = xd.readXFlt(offset + 4);
+        const index = x.readXInt(offset);
+        const value = x.readXFlt(offset + 4);
         out.set(index, value);
     }
 
     return out;
 }
 
-const IS_LE = os.endianness() === 'LE';
+const IS_LE = os.endianness() === 'LE' || process.env.XWS_FLIP_BYTES === "true";
 
 type ReaderFunction = (offset: number) => number;
 type WriterFunction = (value: number, offset: number) => void;
 
-export class XPDataView {
-    readonly readXInt: ReaderFunction;
-    readonly writeXInt: WriterFunction;
-
+class XPDataView {
     readonly readXFlt: ReaderFunction;
     readonly writeXFlt: WriterFunction;
 
+    readonly readXInt: ReaderFunction;
+    readonly writeXInt: WriterFunction;
+
     constructor(buf: Buffer) {
         if (IS_LE) {
-            this.readXInt = buf.readInt32LE.bind(buf)
-            this.writeXInt = buf.writeInt32LE.bind(buf)
-            this.readXFlt = buf.readFloatLE.bind(buf)
-            this.writeXFlt = buf.writeFloatLE.bind(buf)
+            this.readXFlt = Buffer.prototype.readFloatLE.bind(buf);
+            this.writeXFlt = Buffer.prototype.writeFloatLE.bind(buf);
+            this.readXInt = Buffer.prototype.readInt32LE.bind(buf);
+            this.writeXInt = Buffer.prototype.writeInt32LE.bind(buf);
         } else {
-            this.readXInt = buf.readInt32BE.bind(buf);
-            this.writeXInt = buf.writeInt32BE.bind(buf);
-            this.readXFlt = buf.readFloatBE.bind(buf);
-            this.writeXFlt = buf.writeFloatBE.bind(buf);
+            this.readXFlt = Buffer.prototype.readFloatBE.bind(buf);
+            this.writeXFlt = Buffer.prototype.writeFloatBE.bind(buf);
+            this.readXInt = Buffer.prototype.readInt32BE.bind(buf);
+            this.writeXInt = Buffer.prototype.writeInt32BE.bind(buf);
         }
     }
 }

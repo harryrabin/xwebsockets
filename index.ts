@@ -12,11 +12,12 @@ dotenv.config({
 
 const XP_PORT = 49000;
 const SERVER_PORT = parseInt(process.env.XWS_PORT!) || 0;
+const DEBUG_MODE = process.env.XWS_ENV === 'debug';
 
 // Express server
 const serverApp = express();
 
-if (process.env.XWS_ENV === 'debug') serverApp.use('/', (req, _res, next) => {
+if (DEBUG_MODE) serverApp.use('/', (req, _res, next) => {
     console.log(`${req.method} ${req.originalUrl}`);
     next();
 });
@@ -27,7 +28,7 @@ if (process.env.XWS_STATIC && process.env.XWS_STATIC !== "null") {
 
 const expressServer = serverApp.listen(SERVER_PORT);
 
-if (process.env.XWS_ENV === 'debug') expressServer.on('upgrade', (req) => {
+if (DEBUG_MODE) expressServer.on('upgrade', (req) => {
     console.log(`UPGRADE ${req.method} ${req.url}`);
 })
 
@@ -35,25 +36,34 @@ if (process.env.XWS_ENV === 'debug') expressServer.on('upgrade', (req) => {
 const wsServer = new WebSocketServer({ server: expressServer });
 
 wsServer.on('connection', ws => {
-    ws.on('error', console.error);
-    ws.on('message', handleWebSocketMessage.bind(ws))
+    ws.on('message', handleWebSocketMessage.bind(ws));
+    if (DEBUG_MODE) ws.on('error', console.error);
 });
 
-function handleWebSocketMessage(rawData: string) {
-    const data = JSON.parse(rawData);
+function handleWebSocketMessage(this: WebSocket, rawData: WebSocket.RawData) {
+    const data = JSON.parse(rawData.toString());
+
+    // console.dir(data);
+
+    let msg: Buffer | undefined;
 
     switch (data['header']) {
         case "CMND":
-            dgramSocket.send(buffers.constructCmnd(data['path']), XP_PORT);
-            return;
+            msg = buffers.constructCmnd(data['path']);
+            break;
 
         case "DREF":
-            dgramSocket.send(buffers.constructDref(data['data'], data['path']), XP_PORT);
-            return;
+            msg = buffers.constructDref(data['data'], data['path']);
+            break;
 
         case "RREF":
-            dgramSocket.send(buffers.constructRref(data['freq'], data['index'], data['path']), XP_PORT);
-            return;
+            msg = buffers.constructRref(data['freq'], data['index'], data['path']);
+            break;
+    }
+
+    if (msg) {
+        // logBuffer(msg);
+        dgramSocket.send(msg, XP_PORT);
     }
 }
 
@@ -62,7 +72,7 @@ const dgramSocket = dgram.createSocket('udp4');
 dgramSocket.bind();
 
 dgramSocket.on('message', (msg) => {
-    const header = msg.toString('latin1', 0, 4);
+    const header = msg.toString('ascii', 0, 4);
 
     if (header === 'RREF') {
         const map = buffers.decodeRrefResponse(msg);
@@ -91,7 +101,7 @@ function logBuffer(inputBuf: Buffer) {
     for (let offset = 0; offset < limit; offset++) {
         const char = buf.readUInt8(offset);
         if (char < 32 || char > 126) buf.writeUInt8(63, offset);
-        if (char === 0) buf.writeUInt8(48, offset);
+        if (char === 0) buf.writeUInt8(95, offset);
     }
     console.log(buf.toString('latin1'));
 }
