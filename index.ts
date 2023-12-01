@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import WebSocket, { WebSocketServer } from 'ws';
 import express from 'express';
 import ip from 'ip';
-import * as buffers from './buffers';
+import buffers from './buffers';
 
 dotenv.config({
     path: path.resolve(process.cwd(), 'xws_config.txt')
