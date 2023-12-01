@@ -42,7 +42,9 @@ export function decodeRrefResponse(buf: Buffer): Map<number, number> {
     return out;
 }
 
-const IS_LE = os.endianness() === 'LE' || process.env.XWS_FLIP_BYTES === "true";
+const IS_LE = os.endianness() === 'LE' ?
+    (process.env.XWS_FLIP_BYTES !== 'true')
+    : (process.env.XWS_FLIP_BYTES === 'true');
 
 type ReaderFunction = (offset: number) => number;
 type WriterFunction = (value: number, offset: number) => void;
